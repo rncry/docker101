@@ -11,12 +11,14 @@ getting started with it. I'd always read that decoupling services and systems in
 have strived to achieve it, but Docker really forces you to separate different parts of the system and highlights 
 coupling you may not have noticed before.
 
+## Why should I care?
 Using docker offers a number of quick and great wins:
 
 * Application dependencies are no longer an issue. Everything is contained within the image. Use whichever version of Boost you want. Need Python3? No problem.
 * Images will run anywhere, the same, every time.
 * Images will run anywhere, the same, every time.
-* Test several different versions of an app on the same system at the same time without conflicts. 
+* Test several different versions of an app on the same system at the same time without conflicts.
+* You can deploy and install a whole application, including dependencies and even the OS, with a simple push/pull command.
 
 ## How does it work
 Docker itself runs as a daemon on your host system. To start and build containers you interact with the daemon via a
