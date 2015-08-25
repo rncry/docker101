@@ -40,7 +40,10 @@ couple of interesting use cases. Hopefully this should give you an overview of w
 usage, I'd recommend reading the [docker documentation](https://docs.docker.com/userguide/).
 
 If you see any errors like this:
+
+```
 INFO[0001] Error getting container 0c05d122f4ab8155a2febc5f4e35f9c6838de8a06d110ec3258b8022019cb5d7 from driver devicemapper: Error mounting '/dev/mapper/docker-253:2-13893636-0c05d122f4ab8155a2febc5f4e35f9c6838de8a06d110ec3258b8022019cb5d7' on '/var/tmp/doNotRemove/docker/devicemapper/mnt/0c05d122f4ab8155a2febc5f4e35f9c6838de8a06d110ec3258b8022019cb5d7': no such file or directory
+```
 
 Just retry the docker command. It's an issue with Centos' support for devicemapper filesystems, whilst fixable, it's 
 beyond the scope of this exercise!
