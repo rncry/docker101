@@ -194,7 +194,9 @@ use `ENTRYPOINT` or `CMD`:
 
 You'll find a file called `Dockerfile` along with this readme. Take a look at it and then build it:
 
-`docker build -t foobar .` : This tells docker to build the current directory (`.`) and tag the resulting image with the
+`docker build -t foobar .`
+
+This tells docker to build the current directory (`.`) and tag the resulting image with the
 name `foobar`. By default, docker will look for a file called `Dockerfile` in the build directory and use that.
 
 Now run the image:
@@ -244,7 +246,8 @@ of the existing file:
 
 `docker run -it -v ${PWD}/coolapp-dev.py:/usr/local/bin/coolapp -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY coolapp`
 
-Now change the message in coolapp-dev.py and run that command again..
+Now change the message in coolapp-dev.py and run that command again.. you can see how easy it could be to test whole 
+development branches against production systems.
 
 ### Attaching to a running container
 Now lets go a little further. Change into the `anotherapp` folder, have a look at the files and then build the docker
