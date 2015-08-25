@@ -304,6 +304,43 @@ Now, have a look at the two other shells you have open (running the two containe
 
 Hopefully your mind is blown with the possibilities available here...
 
+### Things to explore
+Docker is getting extremely popular, and there are official images for most popular open source applications out there.
+For example:
+
+`docker run -d -p 5432:5432 --name pg postgres`
+
+You're now running a postgres server on your host. While we wait for that to sink in, lets check the command line output 
+of postgres:
+
+`docker logs pg`
+
+You should see something like:
+
+```
+The files belonging to this database system will be owned by user "postgres".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "en_US.utf8".
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+fixing permissions on existing directory /var/lib/postgresql/data ... ok
+creating subdirectories ... ok
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting dynamic shared memory implementation ... posix
+creating configuration files ... ok
+creating template1 database in /var/lib/postgresql/data/base/1 ... ok
+initializing pg_authid ... ok
+initializing dependencies ... ok
+......
+```
+
+You can do the same thing for images of MySQL, Redis, Memcache and so on... Useful right?
+
 # Mesos
 
 ## What is it
