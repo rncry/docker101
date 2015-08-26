@@ -344,10 +344,118 @@ You can do the same thing for images of MySQL, Redis, Memcache and so on... Usef
 # Mesos
 
 ## What is it
+Mesos is a scheduling framework designed to run on a datacentre. It bills itself as an 'Operating System for the Datacentre'
+and allows you to treat your datacentre as if it were a single resource pool (as you would with a single host normally).
+
+Mesos itself does not include any scheduling logic. The decisions about which jobs to execute (based on resource offers)
+are handled by pluggable frameworks. Mesos does provide all of the communication, coordination and execution logic, which
+allows you to concentrate on the business logic of your scheduler.
+
+There are several open source scheduling frameworks available and you can run multiple frameworks on the same cluster at
+the same time. Examples include:
+
+* __Marathon__: this framework is the equivalent of upstart or systemd across your datacentre. It manages long run services
+and will ensure that they are always running. You can also scale a service up or down through a simple web interface or API.
+
+* __Chronos__: this is the equivalent of crontab. Tasks can be scheduled and set to repeat, plus dependencies can be
+specified between tasks.
+
+* __Aurora__: initially developed by Twitter, this scheduler is multipurpose and can handle long running tasks as well as
+ batch jobs with dependency support.
+ 
+* __Cassandra Framework__: As an example of the kinds of things you can do with Mesos, the Cassandra framework can be used
+to manage a distributed Cassandra database cluster with a simple API. The framework can be used to scale the cluster and 
+will ensure the service is always available.
+
+## Why should I care?
+Mesos makes managing services like databases, web applications, data processing etc easy. It allows you to concentrate 
+on creating useful applications, rather than worrying about uptime, availability, hardware failure, VMs and so on.
+
+You stop having to think about individual VMs or physical hardware. Mesos abstracts away the physical hardware and 
+simply presents you with a pool of resources for your application.
+ 
+Efficiency is improved. You no longer have to partition your datacentre into batch hardware (rendering), VM hardware,
+database hardware and so on. Applications can be intelligently scaled across a hetrogeneous cluster by multiple frameworks, 
+each responsible for a different aspect of operations.
+
+Mesos makes writing a traditional farm manager easy. All of the mundane aspects of execution, coordination etc are done 
+for you, allowing you to concentrate on the actual scheduling logic.
 
 ## How does it work?
-Moving parts, frameworks
+Mesos consists of a set of Master nodes and Slave (also called Agent) nodes. The Master processes are fairly lightweight 
+and can be run alongside Slave processes on host machines. The cluster requires at least one Master and one Slave process 
+to be running, additional Master processes provide fault tolerance. Each node in the cluster should have a single Slave 
+process running on it.
+
+Framework processes can be run on any node and communicate the the Master to coordinate scheduling tasks on the slave nodes.
+It is common practice to have a single instance of Marathon running, and to use Marathon to schedule other scheduling 
+frameworks. Marathon itself can be run as a highly available cluster, and thus it will ensure any frameworks it is managing 
+will also be highly available.
+
+Mesos Master processes depend on a Zookeeper cluster for coordination and leader election.
 
 ## Getting up and running
+We're going to be using docker to build and deploy all the moving parts of Mesos. Go into the mesos directory and execute 
+the `build.sh` script. This might take a while, but once it's done type `docker images` and you should see the following 
+new images:
+
+```
+REPOSITORY                        TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+mesos/chronos                     latest              115a4b22089a        2 minutes ago       865.2 MB
+mesos/marathon                    latest              ba26d7755392        3 minutes ago       819.6 MB
+mesos/zookeeper                   latest              8f48b5a3813a        4 minutes ago       751.7 MB
+mesos/slave                       latest              817f8d376be0        5 minutes ago       751.7 MB
+mesos/master                      latest              5fab37846ab4        5 minutes ago       751.7 MB
+mesos                             latest              fdc53781f666        6 minutes ago       751.7 MB
+```
+
+In order to get a full cluster running on one host, we're going to be taking advantage of some of docker's networking 
+and container linking features.
+
+When you start a docker container, by default you cannot connect to it on any ports. The container is said to be running 
+in *bridged* mode, in order to connect to it you must open ports by mapping ports on your host to ports open inside the 
+container. You do this using the `-p host_port:container_port` flag on the command line. When you are writing a Dockerfile 
+you can specify container ports using the syntax:
+ 
+`EXPOSE 8182`
+
+Note that this only tells docker the port is available inside the container, for portability you must specify the host 
+port to map to when you actually run your container.
+
+Docker also allows you to link named containers together using the `--link container_name:hostname` flag. This 
+allows the container you are running to see the named container `container_name` at hostname `hostname`. Also any ports 
+specified in `container_name`'s Dockerfile will be accessible to the container linking to it, even though they may not 
+be open to the host. Think of it as a private VPN connection between the containers.
+
+The final networking option available is running containers in *host* networking mode using the `--net=host` flag. This 
+will open all the container's ports as ports on the host. So if your container runs a web server listening on port 80 
+and you ran it with the `--net=host` flag, you could connect to 127.0.0.1:80 on your host, and you would be accessing 
+the service running inside your container. It's generally considered better practice to make use of `-p 80:80` flags 
+rather than opening up the container like this.
+
+### Start Zookeeper
+We're going to start a single zookeeper node using the docker image we just built. The images we have built are all 
+configured to look for the zookeeper service at hostname *zookeeper*. As we are running this cluster on a single machine 
+we're going to using container linking so that it looks like the zookeeper container has hostname *zookeeper*. For now 
+all we need to do is run:
+
+`docker run -it --name zookeeper mesos/zookeeper`
+
+Note that this will dump you to a shell inside the zookeeper container. I need to update this script so that it runs 
+Zookeeper in the foreground instead.
+
+### Start Mesos Master
+We're going to link our mesos master container to our running zookeeper container. Open a new shell and run:
+ 
+`docker run -it -p 5050:5050 --name mesos-master --link zookeeper:zookeeper mesos/master`
+
+You can see we've linked to our existing zookeeper container, giving it a hostname of zookeeper. We've also opened port 
+5050 to the host. This is the mesos master's communication port. Go to `127.0.0.1:5050` in your browser and verify that 
+mesos is up and running.
+
+### Add some slaves
+
+
+
 
 ## Starting a task

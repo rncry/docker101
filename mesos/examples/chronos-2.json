@@ -1,0 +1,20 @@
+{
+   "schedule": "R/2015-02-19T14:40:00Z/PT2H",
+   "epsilon": "PT5M",
+
+   "name": "CPU saturator as a Docker Job for Chronos",
+   "owner": "jvanns@ilm.com",
+   "runAsUser": "nobody",
+
+   "container": {
+      "type": "DOCKER",
+      "image": "docker-registry.floatingfish.io:5000/chronos-task"
+   },
+
+   "cpus": 2,
+   "mem": 2048,
+   "command": "openssl speed & openssl speed & wait",
+   "retries": 0,
+   "disabled": false
+}
+

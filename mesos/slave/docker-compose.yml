@@ -1,0 +1,9 @@
+mesosslave:
+  image: docker-registry.floatingfish.io:5000/mesos/slave
+  volumes:
+    - /sys:/sys
+    - /usr/bin/docker:/usr/bin/docker:ro
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /lib64/libdevmapper.so.1.02:/lib/libdevmapper.so.1.02:ro
+  net: "host"
+  restart: always
