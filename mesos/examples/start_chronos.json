@@ -3,8 +3,19 @@
   "container": {
     "type": "DOCKER",
     "docker": {
-      "network": "HOST",
-      "image": "docker-registry:5000/mesos/chronos"
+      "network": "BRIDGE",
+      "portMappings": [
+                {
+                    "containerPort": 4400,
+                    "hostPort": 0,
+                    "protocol": "tcp"
+                }
+            ],
+            "parameters": [
+                { "key": "link", "value": "zookeeper:zookeeper" },
+                { "key": "link", "value": "mesos-master:mesos-master" }
+            ]
+      "image": "localhost:5000/mesos/chronos"
     }
   },
   "id": "chronos",
