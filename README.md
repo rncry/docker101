@@ -447,15 +447,42 @@ Zookeeper in the foreground instead.
 ### Start Mesos Master
 We're going to link our mesos master container to our running zookeeper container. Open a new shell and run:
  
-`docker run -it -p 5050:5050 --name mesos-master --link zookeeper:zookeeper mesos/master`
+`docker run -d -p 5050:5050 --name mesos-master --link zookeeper:zookeeper mesos/master`
 
 You can see we've linked to our existing zookeeper container, giving it a hostname of zookeeper. We've also opened port 
 5050 to the host. This is the mesos master's communication port. Go to `127.0.0.1:5050` in your browser and verify that 
 mesos is up and running.
 
-### Add some slaves
+### Add a slave
+As we're running everything on our host, we need to link the slave container to the master and zookeeper. We also need 
+to mount `/sys` and docker folders from the host machine inside the container. This is because the mesos slave uses 
+docker to launch tasks and needs to keep track of process information.
 
+The following command will launch a slave container:
 
+`docker run -d --name mesos-slave --link zookeeper:zookeeper --link mesos-master:mesos-master -v /sys:/sys -v /usr/bin/docker:/usr/bin/docker:ro -v /var/run/docker.sock:/var/run/docker.sock mesos/slave`
 
+If you go back to your browser and navigate to the Slaves tab in the Mesos UI you should see a new slave registered in a 
+few moments.
+
+### Start Marathon framework
+Lets start up Marathon, link it to zookeeper and the mesos master and expose port 8080 (for API and the web UI)
+`docker run -d --name marathon --link zookeeper:zookeeper --link mesos-master:mesos-master -p 8080:8080 mesos/marathon`
+
+Open up 127.0.0.1:8080 in your browser, you should see the Marathon UI.
 
 ## Starting a task
+You now have a fully working Mesos cluster up and running on your host, with a scheduling framework (Marathon). So now 
+lets run a task on it! We're going to run a docker container as a task, in a production environment the slaves would be 
+on different hosts, so you'd need a registry in your cluster so the slaves can download the containers to run. However 
+as our slave container is mounting docker directly from our host, it has access to all the same containers as our host.
+
+We're going to run Chronos as a task on Marathon. Chronos itself is a scheduling framework, but you can run it just like 
+any other long running service on Marathon!
+
+As we've exposed Marathon's API port to our host, we can simply post JSON directly to our host on port 8080 and it'll be 
+routed to our Marathon container. Change into the *mesos/examples* folder and do the following:
+
+`curl -X POST -h "Content-type: application/json" localhost:8080/v2/apps -d @start_chronos.json`
+
+
