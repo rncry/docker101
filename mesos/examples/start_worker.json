@@ -3,9 +3,10 @@
    "name": "Worker task",
    "container": {
      "type": "DOCKER",
-     "image": "worker"
+     "image": "worker",
+     "volumes": [{"containerPath": "/workdir", "hostPath":"/tmp/workdir", "mode":"RW"}]
    },
    "cpus": 0.25,
    "mem": 32,
-   "command": ""
+   "command": "/usr/local/bin/workerapp"
 }
