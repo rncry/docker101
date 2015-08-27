@@ -11,10 +11,10 @@
                     "protocol": "tcp"
                 }
             ],
-            "parameters": [
+      "parameters": [
                 { "key": "link", "value": "zookeeper:zookeeper" },
                 { "key": "link", "value": "mesos-master:mesos-master" }
-            ]
+            ],
       "image": "localhost:5000/mesos/chronos"
     }
   },
