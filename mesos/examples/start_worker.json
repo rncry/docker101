@@ -1,0 +1,11 @@
+{
+   "schedule": "R1//PT2M",
+   "name": "Worker task",
+   "container": {
+     "type": "DOCKER",
+     "image": "worker"
+   },
+   "cpus": 0.25,
+   "mem": 32,
+   "command": ""
+}

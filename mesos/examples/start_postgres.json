@@ -1,0 +1,14 @@
+{
+  "args": [],
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "network": "HOST",
+      "image": "postgres"
+    }
+  },
+  "id": "postgres",
+  "instances": 1,
+  "cpus": 0.1,
+  "mem": 256
+}
