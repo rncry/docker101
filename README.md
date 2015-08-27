@@ -471,7 +471,7 @@ Lets start up Marathon, link it to zookeeper and the mesos master and expose por
 
 Open up 127.0.0.1:8080 in your browser, you should see the Marathon UI.
 
-## Starting a task
+## Starting a long running task
 You now have a fully working Mesos cluster up and running on your host, with a scheduling framework (Marathon). So now 
 lets run a task on it! We're going to run a docker container as a task, in a production environment the slaves would be 
 on different hosts, so you'd need a registry in your cluster so the slaves can download the containers to run. However 
@@ -483,6 +483,73 @@ any other long running service on Marathon!
 As we've exposed Marathon's API port to our host, we can simply post JSON directly to our host on port 8080 and it'll be 
 routed to our Marathon container. Change into the *mesos/examples* folder and do the following:
 
-`curl -X POST -h "Content-type: application/json" localhost:8080/v2/apps -d @start_chronos.json`
+`curl -X POST -H "Content-type: application/json" -d "@start_chronos.json" http://localhost:8080/v2/apps`
 
+Now after a few moments you'll be able to see the chronos task running in the Marathon UI and the Mesos UI. You'll also 
+see the Chronos framework will register itself with Mesos under the Frameworks tab!
 
+Now a point about service discovery: Usually we'd run the Chronos docker container in *host* networking mode, but as we're 
+running everything locally and using docker linking in this example, that wouldn't work. We've specified that we want 
+the container port 4400 (Chronos' API port) mapped to the host but Mesos will assign a random host port to map it to when 
+in *bridge* mode.
+
+This is standard for Mesos, and we can cover service discovery in a cluster at a later point. But for now, lets find 
+Chronos manually:
+
+`docker ps`
+
+Should provide an output like this:
+
+```
+CONTAINER ID        IMAGE                          COMMAND                CREATED             STATUS              PORTS                          NAMES
+6b383c2860ab        localhost:5000/mesos/chronos   "/usr/sbin/start-chr   4 minutes ago       Up 4 minutes        0.0.0.0:31376->4400/tcp        mesos-20150826-162408-204083628-5050-10-S2.4e009d85-423a-4c6f-97a2-83c992781236   
+28c118a50ebb        mesos/slave                    "/usr/sbin/start-mes   33 minutes ago      Up 33 minutes       5051/tcp                       mesos-slave                                                                       
+cda2bc246a17        registry:2                     "/bin/registry /etc/   36 minutes ago      Up 36 minutes       0.0.0.0:5000->5000/tcp         registry                                                                          
+9194d83a647e        mesos/marathon                 "/usr/sbin/start-mar   49 minutes ago      Up 49 minutes       0.0.0.0:8080->8080/tcp         marathon                                                                          
+25f0251c7ee0        mesos/master                   "/usr/sbin/start-mes   17 hours ago        Up 17 hours         0.0.0.0:5050->5050/tcp         mesos-master                                                                      
+31299e7f781e        mesos/zookeeper                "/usr/sbin/start-zoo   17 hours ago        Up 17 hours         2181/tcp, 2888/tcp, 3888/tcp   zookeeper
+```
+
+Along the top line, you can see the host port which has been mapped to the Chronos container port, in this case it's
+`31376`. So browsing to `127.0.0.1:31376` will give us the Chronos UI.
+
+Now just for fun.. try stopping the chronos container:
+
+`docker stop 6b383c2860ab`
+
+Marathon will notice that it's died and restart it for you. Isn't that nice (but watch out, it'll have a new host port).
+
+Bonus: Just for fun, lets launch a postgres database:
+
+`curl -X POST -H "Content-type: application/json" -d "@start_postgres.json" http://localhost:8080/v2/apps`
+
+Take a look at the json file for an example of *host* mode networking.
+
+## Starting a batch job
+Go into the `mesos/examples/worker` folder and build the worker docker image:
+
+`docker build -t worker .`
+
+Note: this assumes you've run through the earlier docker examples to build the *foobar* and *coolapp* images already.
+
+The worker application is a small python script that reads `/workdir/input` inside the container and writes to `/workdir/output`.
+It has a sleep in there too to simulate a big batch job. So that we can see the output produced, we're going to create 
+an input/output folder on our host, with a dummy input file and mount it inside the container:
+
+`mkdir /tmp/workdir && echo '12345' > /tmp/workdir/input`
+
+Now lets tell Chronos to run the batch task (Remember to check which port it's listening on and adjust the url!):
+
+`curl -X POST -H "Content-Type: application/json" -d "@start_worker.json" http://localhost:31662/scheduler/iso8601`
+
+Have a look at the Mesos and Chronos UIs while the task is running. Once it's done, have a look at the output file created 
+on your host:
+
+`cat /tmp/workdir/output`
+
+Success!
+
+## Go forth and experiment!
+Hopefully you've seen some of the power of mesos and docker and how they can simplify a lot of laborious processes.
+The next step is setting up this cluster in a more useable environment (ie across several hosts) and implementing service 
+discovery (if needed). Hopefully this tutorial has given you enough knowledge to do that, but if not please get in touch!
